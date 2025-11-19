@@ -1,0 +1,17 @@
+isEmpty? 1
+size: 0
+dict.add(run)= 1
+dict.add(garage)= 1
+dict.add(fly)= 1
+despues de add:
+isEmpty? 0
+size: 3
+Diccionario:
+E
+-(F):run(I):correr(E)
+garage(F):garage(I):garaje(E)
+-(F):fly(I):volar(E)
+I
+-(F):fly(I):volar(E)
+garage(F):garage(I):garaje(E)
+-(F):run(I):correr(E)

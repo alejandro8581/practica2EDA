@@ -1,6 +1,11 @@
 #ifndef ORDEREDDICTIONARY_H
 #define ORDEREDDICTIONARY_H
+#include "DictionaryEntry.h"
+#include "List.h"
+#include "Dictionary.h"
 #include <iostream>
+#include <vector>
+
 using namespace std;
 class OrderedDictionary{
     private:
@@ -21,5 +26,9 @@ class OrderedDictionary{
     int loadFromDictionary(const Dictionary &dictionary);
     bool containsLanguage(char language) const;
     List& getList(char language);
-    friend ostream& operator<<(ostream &os, const OrderedDictionary &od);
-}
+    friend ostream& operator<<(ostream &os, const OrderedDictionary &od);
+
+    // Dentro de la clase OrderedDictionary (parte public):
+DictionaryEntry* getEntry(int index) const;
+};
+#endif

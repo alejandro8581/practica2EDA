@@ -3,131 +3,168 @@
 using namespace std;
 
 OrderedDictionary::OrderedDictionary(){
-    this.language1='I';
-    this.language2='E';
-    entries=[];
-    list1=List('I');
-    list2=List('E');
-
+    this->language1='I';
+    this->language2='E';
+    entries = vector<DictionaryEntry*>();
+    list1 = List('I');
+    list2 = List('E');
 }
 
 OrderedDictionary::OrderedDictionary(char language1, char language2){
-    this.language1=language1;
-    this.language2=language2;
-    entries=[];
-    lsit1=List(language1);
-    list2=List(language2);
+    this->language1 = language1;
+    this->language2 = language2;
+    entries = vector<DictionaryEntry*>();
+    list1 = List(language1);
+    list2 = List(language2);
 }
 
-OrderedDictionary::~OrderedDictionary(){}
+OrderedDictionary::~OrderedDictionary(){
+    // Liberar memoria de todas las entradas
+    for(int i = 0; i < entries.size(); i++){
+        delete entries[i];
+    }
+    entries.clear();
+}
 
 OrderedDictionary::OrderedDictionary(const OrderedDictionary& od){
-    this.language1=od.language1;
-    this.language2=od.language2;
-    for(int i=0;i<entries.size();i++){
-        this.add(od.entries.get(i)); //esto lo gestionará luego el add de esta clase
+    this->language1 = od.language1;
+    this->language2 = od.language2;
+    entries = vector<DictionaryEntry*>();
+    list1 = List(language1);
+    list2 = List(language2);
+    
+    // Copiar cada entrada usando el método add
+    for(int i = 0; i < od.entries.size(); i++){
+        this->add(*(od.entries.at(i))); // Desreferenciar el puntero para pasar el objeto
     }
 }
 
-OrderedDictionary::bool isEmpty() const{
-    if(entries.empty())
-        return true; 
-    return false;
+bool OrderedDictionary::isEmpty() const{
+    return entries.empty();
 }
-OrderedDictionary::int size() const{
+
+int OrderedDictionary::size() const{
     return entries.size();
 }
 
-OrderedDictionary::bool add(DictionaryEntry entry){
-    //con entry.getTranslation(languageX) tengo la traduccion en cada idioma, tengo que recorrer entries comprobando ambos idiomas
-    for (int i=0;i<entries.size();i++){
-        if(entry.getTranslation(language1)==entries.at(i).getTranslation(language1) ||entry.getTranslation(language2)==entries.at(i).getTranslation(language2)){
-            //alguna de las traducciones es entrada repetida
-            //no se agrega
+bool OrderedDictionary::add(DictionaryEntry entry){
+    // Verificar que tiene traducción para ambos idiomas
+    if(entry.getWord().getTranslation(language1) == "-" || entry.getWord().getTranslation(language2) == "-"){
+        return false;
+    }
+    
+    // Verificar que no exista entrada duplicada en ninguno de los dos idiomas
+    for (int i = 0; i < entries.size(); i++){
+        if(entry.getWord().getTranslation(language1) == entries.at(i)->getWord().getTranslation(language1) ||
+           entry.getWord().getTranslation(language2) == entries.at(i)->getWord().getTranslation(language2)){
             return false;
         }
     }
-    //aqui ya se ha comprobado que no se repita la entrada
-    Dictionaryentry* entryptr = new DictionaryEntry(entry);
-    //lo paso a un nuevo puntero
+    
+    // Crear nueva entrada con memoria dinámica
+    DictionaryEntry* entryptr = new DictionaryEntry(entry);
+    
+    // Añadir al vector y a las listas
     entries.push_back(entryptr);
     list1.add(entryptr);
     list2.add(entryptr);
-    //ya el metodo add debe procurar orden y la correcta adicion de las entradas
+    
     return true;
 }
 
-OrderedDictionary::bool remove(string word, char language){
-    
-    for(int i=0;i<entries.size();i++){
-        if(word==entries.at(i).getTranslation(language)){
-            delete entries[i];//como hay punteros, la memoria se vuelve crazy y paranoica
+bool OrderedDictionary::remove(string word, char language){
+    for(int i = 0; i < entries.size(); i++){
+        if(word == entries.at(i)->getWord().getTranslation(language)){
+            // Guardar puntero para eliminar de las listas
+            DictionaryEntry* toRemove = entries[i];
+            
+            // Eliminar de las listas (por palabra en cada idioma)
+            list1.remove(toRemove->getWord().getTranslation(language1));
+            list2.remove(toRemove->getWord().getTranslation(language2));
+            
+            // Liberar memoria y eliminar del vector
+            delete entries[i];
             entries.erase(entries.begin() + i);
-            list1.remove(word);
-            list2.remove(word);
-            //ya list gestiona con su metodo todo lo extravagante
+            
             return true;
         }
     }
     return false;
 }
 
-OrderedDictionary::int loadFromDictionary(const Dictionary &dictionary){
-    this->entries.clear();
-    list1.clear();//he creado un clear para list
-    list2.clear();
-    //ahora deberia de estar todo vacio
-    int added=0;
-    for(int i=0;i<dictionary.entries.size();i++){
-        if(entries.at(i).getTranslation(language1)!='-' &&entries.at(i).getTranslation(language2)!='-' ){//existe traduccion para ambos idiomas
-            add(entries.at(i));//esto ya gestiona todo con el m etodo de arriba
-            added++;
+int OrderedDictionary::loadFromDictionary(const Dictionary &dictionary){
+    // Limpiar diccionario actual
+    for(int i = 0; i < entries.size(); i++){
+        delete entries[i];
+    }
+    entries.clear();
+    
+    // Limpiar listas (crear nuevas vacías)
+    list1 = List(language1);
+    list2 = List(language2);
+    
+    int added = 0;
+    DictionaryEntry entry;
+    // Añadir entradas del diccionario que tengan ambos idiomas
+    // Usar el método público size() del Dictionary
+    for(int i = 0; i < dictionary.entries.size(); i++){
+        entry = dictionary.entries.at(i); // Usar método público
+       // cout << "DEBUG" << entry.getWord().getTranslation(language1);
+       //cout <<"WORD:"<<entry.getWord()<<endl;
+       //cout << "DEBUG" << entry<< endl;
+        if(entry.getWord().getTranslation(language1) != "-" && 
+           entry.getWord().getTranslation(language2) != "-"){
+            //cout << "DEBUG(ENTRA)" << entry.getWord().getTranslation(language1);
+            if(add(entry)){
+                added++;
+            }
         }
     }
+    
     return added;
 }
+
 bool OrderedDictionary::containsLanguage(char language) const{
-    if(language==language1 || language==language2){
-        return true;
-    }
-    return false;
+    return (language == this->language1 || language == this->language2);
 }
+
 List& OrderedDictionary::getList(char language){
-    if(language==language1)
+    if(language == language1)
         return list1;
-    if(language==language2)
+    if(language == language2)
         return list2;
-}
-ostream& operator<<(ostream &os, const OrderedDictionary &od) {
-    // Mostrar el idioma de la lista1
-    os << od.language1 << endl;
     
-    // Recorrer y mostrar todas las entradas de la lista1 sin metadatos
-    Node *current = od.list1.head;
+    throw invalid_argument("Idioma no gestionado por el diccionario");
+}
+
+ostream& operator<<(ostream &os, const OrderedDictionary &od) {
+    // Mostrar lista1
+    os << od.language1 << endl;
+    List::Node *current = od.list1.head;
     while (current != nullptr) {
         if (current->entry != nullptr) {
-            // Mostrar la entrada sin los metadatos
-            os << current->entry->getWord();
-            current->entry->showTranslations(os);
-            os << endl;
+            os << current->entry->getWord(); // Sin endl aquí
         }
         current = current->next;
     }
     
-    // Mostrar el idioma de la lista2
+    // Mostrar lista2
     os << od.language2 << endl;
-    
-    // Recorrer y mostrar todas las entradas de la lista2 sin metadatos
     current = od.list2.head;
     while (current != nullptr) {
         if (current->entry != nullptr) {
-            // Mostrar la entrada sin los metadatos
-            os << current->entry->getWord();
-            current->entry->showTranslations(os);
-            os << endl;
+            os << current->entry->getWord(); // Sin endl aquí
         }
         current = current->next;
     }
     
     return os;
+}
+
+
+DictionaryEntry* OrderedDictionary::getEntry(int index) const {
+    if (index < 0 || index >= (int)entries.size()) {
+        return nullptr;
+    }
+    return entries[index];
 }

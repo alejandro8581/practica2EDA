@@ -1,0 +1,19 @@
+isEmpty? 1
+size: 0
+l.add(run)= 1
+l.add(garage)= 1
+l.add(fly)= 1
+despues de add: 
+isEmpty? 0
+size: 3
+  
+l.get(1)= garage (F):garage (I):garaje (E)
+l.findNearest("race")= - (F):run (I):correr (E)
+  
+I
+- (F):fly (I):volar (E)
+[verb] used: 0 times
+garage (F):garage (I):garaje (E)
+[noun] used: 0 times
+- (F):run (I):correr (E)
+[verb] used: 0 times

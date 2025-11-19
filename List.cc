@@ -1,4 +1,4 @@
-#include List.h
+#include "List.h"
 using namespace std;
 
 List::List(){
@@ -11,6 +11,15 @@ List::List(char language){
     head=nullptr;
     tail=nullptr;
 }
+List::Node::Node(DictionaryEntry *entry) {
+    this->entry = entry;
+    this->next = nullptr;
+}
+List::Node::Node() {
+    this->entry = nullptr;
+    this->next = nullptr;
+}
+
 
 List::~List(){
     Node* current = head;
@@ -267,7 +276,7 @@ ostream& operator<<(ostream &os, List &list) {
     os << list.language << endl;
     
     // Recorrer la lista desde el inicio
-    Node* current = list.head;
+    List::Node* current = list.head;
     while (current != nullptr) {
         // Mostrar la entrada del nodo actual
         if (current->entry != nullptr) {
@@ -279,9 +288,9 @@ ostream& operator<<(ostream &os, List &list) {
     return os;
 }
 void List::clear(){
-    Node* current = head;
+    List::Node* current = head;
     while(current != nullptr){
-        Node* next = current->next;
+        List::Node* next = current->next;
         delete current;
         current = next;
     }
