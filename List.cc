@@ -1,5 +1,17 @@
+// DNI 48785534G ORTEGA PEREZ, ALEJANDRO
 #include "List.h"
+#include <algorithm> // Necesario para std::transform
+#include <cctype>    // Necesario para ::tolower
 using namespace std;
+// hago una funcion auxiliar porque se hace coñazo muy rapido
+string toLowerStr(string str) {
+    string lower = str;
+    // lo de unsigned char me lo ha dicho el homie, porque si no los
+    //caracteres especiales se fuma un petardo eclesiastico
+    std::transform(lower.begin(), lower.end(), lower.begin(), 
+                   [](unsigned char c){ return std::tolower(c); });
+    return lower;
+}
 
 List::List(){
     language='I';
@@ -122,12 +134,24 @@ bool List::add(DictionaryEntry *entry){
     //So now I have the word and the words, now I need to order ts. FUck me man.
     //OK WE ARE SO IN. Por primera vez C++ no da puto sífilis, y ya implementa esto de base
     //I used to pray for times like this
+    
+    // --- ARREGLO START: Convertir a minusculas para comparar ---
+    string tsWordLower = tsWord;
+    for(auto& c : tsWordLower) c = tolower((unsigned char)c);
+    // ----------------------------------------------------------
+
     int pos=0;
-    for(int i=0;i<alldeer.size();i++){
-        if(tsWord==alldeer.at(i)){//aqui no seguira con el resto de la logica, porque no se anade
+    for(int i=0;i<(int)alldeer.size();i++){
+        
+        // --- ARREGLO START: Convertir la de la lista a minusculas ---
+        string listWordLower = alldeer.at(i);
+        for(auto& c : listWordLower) c = tolower((unsigned char)c);
+        // ----------------------------------------------------------
+
+        if(tsWordLower==listWordLower){//aqui no seguira con el resto de la logica, porque no se anade
             return false;
         }
-        if(tsWord>alldeer.at(i)){//la primera vez qu esto se cumpla, es la posicion en la que quiero meterlo.
+        if(tsWordLower>listWordLower){//la primera vez qu esto se cumpla, es la posicion en la que quiero meterlo.
             //de momento me lo voy a guardar fuera del bucle
             pos=i+1;
         }
@@ -157,54 +181,39 @@ bool List::add(DictionaryEntry *entry){
 
 
 
-
 bool List::remove(string word){
-    //utilizo findexact para comparar cada entry
-    Node* currentNode=head;
-    Node* nextNode;
-    Node* prevNode=nullptr;
-    for (int i=0;i<size();i++){
-        nextNode=currentNode->next;
-        if (currentNode->entry == findExact(word)){//este es el que hay que eliminar
-            if(prevNode != nullptr){
-                prevNode->next=nextNode;
+    // 1. Buscar el puntero a la entrada UNA SOLA VEZ
+    DictionaryEntry* target = findExact(word);
+    
+    // Si no existe, salimos inmediatamente
+    if (target == nullptr) return false;
+
+    // 2. Recorrer la lista buscando el nodo que contiene ese puntero
+    Node* currentNode = head;
+    Node* prevNode = nullptr;
+
+    while (currentNode != nullptr) {
+        if (currentNode->entry == target) {
+            // Encontrado: re-enlazamos los punteros
+            if (prevNode != nullptr) {
+                prevNode->next = currentNode->next;
             } else {
-                head = nextNode;
+                head = currentNode->next; // Era el primero
             }
-            if(currentNode == tail){
-                tail = prevNode;
+            
+            if (currentNode == tail) {
+                tail = prevNode; // Era el último
             }
-            delete currentNode;//zamn
+
+            // Borramos el NODO (no la entrada)
+            delete currentNode;
             return true;
         }
-        prevNode=currentNode;
-        currentNode=currentNode->next;
+        prevNode = currentNode;
+        currentNode = currentNode->next;
     }
+    
     return false;
-}
-
-bool List::remove(int index){
-    Node* currentNode=head;
-    Node* nextNode;
-    Node* prevNode=nullptr;
-    if(index>=size())
-        return false;
-    for(int i=0;i<index;i++){
-        prevNode=currentNode;
-        currentNode=currentNode->next;
-    }
-    //despues del for las variables de nodo deberian de estar correctamente posicionadas, igulmente voy a meterlo dentro con un if
-    nextNode=currentNode->next;
-    if(prevNode != nullptr){
-        prevNode->next=nextNode;
-    } else {
-        head = nextNode;
-    }
-    if(currentNode == tail){
-        tail = prevNode;
-    }
-    delete currentNode;//zamn
-    return true;
 }
 
 DictionaryEntry* List::get(int index) const{
@@ -217,14 +226,25 @@ DictionaryEntry* List::get(int index) const{
     return currentNode->entry;
 }
 
-DictionaryEntry* List::findExact(string word) const{
-    Node* currentNode=head;
+DictionaryEntry* List::findExact(string word) const {
+    Node* currentNode = head;
 
-    while(currentNode != nullptr){
-        if(currentNode->entry->getWord().getTranslation(this->language)==word){
+    //paso a minusculas con esta libreria que es la forma mas rapida
+    string wordLower = word;
+    std::transform(wordLower.begin(), wordLower.end(), wordLower.begin(), ::tolower);
+
+    while(currentNode != nullptr) {
+        string dictWord = currentNode->entry->getWord().getTranslation(this->language);
+        
+        // paso la otra a minusculas tambien
+        string dictWordLower = dictWord;
+        std::transform(dictWordLower.begin(), dictWordLower.end(), dictWordLower.begin(), ::tolower);
+
+        //como se comparan ambas en minusculas, da igual como fuesen originalmente
+        if(dictWordLower == wordLower) {
             return currentNode->entry;
         }
-        currentNode=currentNode->next;
+        currentNode = currentNode->next;
     }
     return nullptr;
 }
@@ -232,24 +252,25 @@ DictionaryEntry* List::findExact(string word) const{
 int calcularDistancia(const string &p, const string &q) {
     int sumaP = 0, sumaQ = 0;
 
-    // Sumar ASCII de la cadena p
+    // Sumar ASCII de la cadena p (convirtiendo a minúsculas cada carácter)
     for(char c : p) {
-        sumaP += int(c);
+        sumaP += std::tolower((unsigned char)c);
     }
-    // Sumar ASCII de la cadena q
+    // Sumar ASCII de la cadena q (convirtiendo a minúsculas cada carácter)
     for(char c : q) {
-        sumaQ += int(c);
+        sumaQ += std::tolower((unsigned char)c);
     }
 
     long long cuadradoP = 1LL * sumaP * sumaP;
     long long cuadradoQ = 1LL * sumaQ * sumaQ;
 
-    double numerador = sqrt(abs(cuadradoP - cuadradoQ));
+    // Usamos std::abs para asegurar que llamamos a la versión correcta (entera o float)
+    double numerador = std::sqrt(std::abs(cuadradoP - cuadradoQ));
     int denominador = p.length() + q.length();
 
-    if (denominador == 0) return 0; // Evitar división por cero
+    if (denominador == 0) return 0;
 
-    return static_cast<int>(numerador / denominador); // División entera
+    return static_cast<int>(numerador / denominador);
 }
 
 DictionaryEntry* List::findNearest(string word) const{
@@ -297,3 +318,4 @@ void List::clear(){
     head = nullptr;
     tail = nullptr;
 }
+
